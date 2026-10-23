@@ -2,8 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -14,7 +12,7 @@ import (
 	"github.com/kaeman-dev/kaeman-public-api/response"
 )
 
-func Chain(h func(c *gin.Context) error, mws ...func(c *gin.Context) error) gin.HandlerFunc {
+func Chain(h func(*gin.Context) error, mws ...func(*gin.Context) error) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, mw := range mws {
 			err := mw(c)
@@ -52,12 +50,6 @@ func Errors(log *slog.Logger) gin.HandlerFunc {
 			return
 		}
 
-		_ = response.NewData("oops, something went wrong", gin.H{"traceID": requestid.Get(c)}).WithStatus(http.StatusInternalServerError).Write(c)
+		_ = response.Write(c, http.StatusInternalServerError, "oops, something went wrong", gin.H{"traceID": requestid.Get(c)})
 	}
-}
-
-func Recovery() gin.HandlerFunc {
-	return gin.RecoveryWithWriter(io.Discard, func(c *gin.Context, err any) {
-		_ = c.Error(fmt.Errorf("panic: %v\n%s", err, debug.Stack()))
-	})
 }

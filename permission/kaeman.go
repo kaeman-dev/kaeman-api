@@ -1,4 +1,3 @@
-//go:generate stringer -flags "Permission=lineComment" -output=string.go
 package permission
 
 type Permission uint64

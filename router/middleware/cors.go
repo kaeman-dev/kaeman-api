@@ -16,7 +16,7 @@ func CORS() gin.HandlerFunc {
 			return
 		}
 		if method := c.GetHeader("Access-Control-Request-Method"); method != http.MethodGet && method != http.MethodPost {
-			_ = response.Status(http.StatusMethodNotAllowed).Write(c)
+			_ = response.Write(c, http.StatusMethodNotAllowed, "", nil)
 			c.Abort()
 			return
 		}
@@ -24,7 +24,7 @@ func CORS() gin.HandlerFunc {
 			switch strings.ToLower(strings.TrimSpace(header)) {
 			case "", "authorization", "content-type", "public-api-key":
 			default:
-				_ = response.Status(http.StatusBadRequest).Write(c)
+				_ = response.Write(c, http.StatusBadRequest, "", nil)
 				c.Abort()
 				return
 			}

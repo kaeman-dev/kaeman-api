@@ -26,8 +26,6 @@ type VerifyData struct {
 	ExpiresAt time.Time `json:"expiresAt" example:"2026-09-30T12:00:00Z"`
 }
 
-const sessionTTL = 24 * time.Hour
-
 // Verify godoc
 // @Summary 验证 Minecraft 会话并换取会话 token
 // @Description 用 challenge 返回的 serverID 和玩家 UUID 调用，服务端校验玩家已在 Mojang 会话服务器 join 该 serverID。验证成功后签发 24 小时有效的 Minecraft 会话 JWT，并立即消费掉挑战。
@@ -44,21 +42,22 @@ const sessionTTL = 24 * time.Hour
 func (h Handler) Verify(c *gin.Context) error {
 	input := VerifyInput{}
 
-	if err := response.Decode(c, &input); err != nil {
-		return response.New("Invalid request body").WithStatus(http.StatusBadRequest).Write(c)
+	if err := utils.DecodeJSON(http.MaxBytesReader(c.Writer, c.Request.Body, 16<<10), &input); err != nil {
+		return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
 	}
 	serverID, err := utils.NormalizeUUID(input.ServerID)
 	if err != nil {
-		return response.New("Invalid serverID").WithStatus(http.StatusBadRequest).Write(c)
+		return response.Write(c, http.StatusBadRequest, "Invalid serverID", nil)
 	}
 	id, err := utils.NormalizeUUID(input.UUID)
 	if err != nil {
-		return response.New("Invalid UUID").WithStatus(http.StatusBadRequest).Write(c)
+		return response.Write(c, http.StatusBadRequest, "Invalid UUID", nil)
 	}
 
-	_, err = h.Services.Cache.Get(c.Request.Context(), challengeKeyPrefix+serverID)
+	key := "kaeman:challenge:" + serverID
+	_, err = h.Services.Cache.Get(c.Request.Context(), key)
 	if errors.Is(err, store.NotFound{}) {
-		return response.New("Invalid or expired challenge").WithStatus(http.StatusUnauthorized).Write(c)
+		return response.Write(c, http.StatusUnauthorized, "Invalid or expired challenge", nil)
 	}
 	if err != nil {
 		return err
@@ -69,25 +68,25 @@ func (h Handler) Verify(c *gin.Context) error {
 	}
 	err = h.Services.Minecraft.HasJoined(c.Request.Context(), identity.Name, input.ServerID)
 	if errors.Is(err, minecraft.ErrNotJoined) {
-		return response.New("Minecraft session verification failed").WithStatus(http.StatusUnauthorized).Write(c)
+		return response.Write(c, http.StatusUnauthorized, "Minecraft session verification failed", nil)
 	}
 	if err != nil {
 		return err
 	}
-	token, err := h.Services.Tokens.IssueMinecraft(*identity, sessionTTL)
+	token, err := h.Services.Tokens.IssueMinecraft(*identity, 24*time.Hour)
 	if err != nil {
 		return err
 	}
-	_, err = h.Services.Cache.Get(c.Request.Context(), challengeKeyPrefix+serverID)
+	_, err = h.Services.Cache.Get(c.Request.Context(), key)
 	if errors.Is(err, store.NotFound{}) {
-		return response.New("Challenge already used or expired").WithStatus(http.StatusUnauthorized).Write(c)
+		return response.Write(c, http.StatusUnauthorized, "Challenge already used or expired", nil)
 	}
 	if err != nil {
 		return err
 	}
-	if err = h.Services.Cache.Delete(c.Request.Context(), challengeKeyPrefix+serverID); err != nil {
+	if err = h.Services.Cache.Delete(c.Request.Context(), key); err != nil {
 		return err
 	}
 	c.Header("Cache-Control", "no-store")
-	return response.NewData("ok", VerifyData{AccessToken: token, ExpiresAt: time.Now().UTC().Add(sessionTTL)}).Write(c)
+	return response.Write(c, http.StatusOK, "ok", VerifyData{AccessToken: token, ExpiresAt: time.Now().UTC().Add(24 * time.Hour)})
 }

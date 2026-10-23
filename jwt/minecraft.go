@@ -2,10 +2,11 @@ package jwt
 
 import (
 	"errors"
+	"strings"
 	"time"
+	"uuid"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/kaeman-dev/kaeman-public-api/permission"
 	"github.com/kaeman-dev/kaeman-public-api/utils"
 )
@@ -43,9 +44,9 @@ func (t *Token) IssueMinecraft(mcIdentity MinecraftIdentity, lifetime time.Durat
 
 	now := time.Now().UTC()
 
-	value, err := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims[MinecraftClaimsData]{
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims[MinecraftClaimsData]{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
+			ID:        uuid.New().String(),
 			Issuer:    "kaeman-public-api",
 			Audience:  jwt.ClaimStrings{"minecraft-session"},
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -55,7 +56,6 @@ func (t *Token) IssueMinecraft(mcIdentity MinecraftIdentity, lifetime time.Durat
 			Minecraft: mcIdentity,
 		},
 	}).SignedString(t.Secret)
-	return value, err
 }
 
 func (t *Token) ParseMinecraft(value string) (*Claims[MinecraftClaimsData], error) {
@@ -81,7 +81,7 @@ func (t *Token) ParseMinecraft(value string) (*Claims[MinecraftClaimsData], erro
 		return nil, errors.New("invalid minecraft identity")
 	}
 
-	if validName := utils.ValidMinecraftName(claims.Data.Minecraft.Name); !validName {
+	if name := claims.Data.Minecraft.Name; name == "" || len(name) > 16 || strings.Trim(name, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_") != "" {
 		return nil, errors.New("invalid minecraft name")
 	}
 

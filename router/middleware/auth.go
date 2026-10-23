@@ -3,7 +3,6 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"uuid"
 
@@ -13,57 +12,37 @@ import (
 	"github.com/kaeman-dev/kaeman-public-api/response"
 	"github.com/kaeman-dev/kaeman-public-api/server"
 	"github.com/kaeman-dev/kaeman-public-api/storage"
+	"github.com/kaeman-dev/kaeman-public-api/utils"
 	"gorm.io/gorm"
 )
 
-func extractToken(value string) string {
-	value = strings.TrimSpace(value)
-	fields := strings.Fields(value)
-	if len(fields) != 2 || !strings.EqualFold(fields[0], "bearer") {
-		return value
-	}
-	return fields[1]
-}
-
-func PublicAPIKey(deps *server.Services, optional bool, pms permission.Permission) func(c *gin.Context) error {
+func PublicAPIKey(deps *server.Services, pms permission.Permission) func(*gin.Context) error {
 	return func(ctx *gin.Context) error {
-		value := extractToken(ctx.GetHeader("Authorization"))
+		value := utils.BearerToken(ctx.GetHeader("Authorization"))
 		if value == "" {
-			if optional {
-				return nil
-			}
-			return response.New("Key required").WithStatus(http.StatusUnauthorized).Write(ctx)
+			return response.Write(ctx, http.StatusUnauthorized, "Key required", nil)
 		}
 		claims, err := deps.Tokens.ParsePublicAPI(value)
 		if err != nil {
-			if optional {
-				return nil
-			}
-			return response.New("Invalid public api key").WithStatus(http.StatusUnauthorized).Write(ctx)
+			return response.Write(ctx, http.StatusUnauthorized, "Invalid public api key", nil)
 		}
 		if pms != 0 && *claims.Data.Permissions&pms != pms {
-			return response.New("Required permission missing").WithStatus(http.StatusUnauthorized).Write(ctx)
+			return response.Write(ctx, http.StatusUnauthorized, "Required permission missing", nil)
 		}
 		ctx.Set("publicAPIKey", claims)
 		return nil
 	}
 }
 
-func MinecraftToken(deps *server.Services, optional bool) func(c *gin.Context) error {
+func MinecraftToken(deps *server.Services) func(*gin.Context) error {
 	return func(ctx *gin.Context) error {
-		value := extractToken(ctx.GetHeader("Authorization"))
+		value := utils.BearerToken(ctx.GetHeader("Authorization"))
 		if value == "" {
-			if optional {
-				return nil
-			}
-			return response.New("Key required").WithStatus(http.StatusUnauthorized).Write(ctx)
+			return response.Write(ctx, http.StatusUnauthorized, "Key required", nil)
 		}
 		claims, err := deps.Tokens.ParseMinecraft(value)
 		if err != nil {
-			if optional {
-				return nil
-			}
-			return response.New("Invalid minecraft key").WithStatus(http.StatusUnauthorized).Write(ctx)
+			return response.Write(ctx, http.StatusUnauthorized, "Invalid minecraft key", nil)
 		}
 
 		if publicAPIKey, ok := ctx.Get("publicAPIKey"); ok {
@@ -73,11 +52,12 @@ func MinecraftToken(deps *server.Services, optional bool) func(c *gin.Context) e
 			}
 			ownerUID, err := uuid.Parse(pub.Data.UID)
 			if err != nil {
-				return response.New("Invalid public api key").WithStatus(http.StatusUnauthorized).Write(ctx)
+				return response.Write(ctx, http.StatusUnauthorized, "Invalid public api key", nil)
 			}
-			bound, err := storage.GetIdentity(ctx.Request.Context(), deps.DB, storage.PlatformMinecraft, claims.Data.Minecraft.UUID)
+			var bound storage.KaemanIdentity
+			err = deps.DB.WithContext(ctx.Request.Context()).First(&bound, "platform = ? AND identity = ?", "minecraft", claims.Data.Minecraft.UUID).Error
 			if errors.Is(err, gorm.ErrRecordNotFound) || (err == nil && bound.UID != ownerUID) {
-				return response.New("Minecraft identity not bound to this public api key").WithStatus(http.StatusUnauthorized).Write(ctx)
+				return response.Write(ctx, http.StatusUnauthorized, "Minecraft identity not bound to this public api key", nil)
 			}
 			if err != nil {
 				return err

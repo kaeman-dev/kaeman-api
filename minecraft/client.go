@@ -14,28 +14,21 @@ import (
 )
 
 type Client struct {
-	hc *http.Client
-
-	sessionBaseURL string
-}
-
-// New hc 不能为空, 不然panic
-func New(baseURL string, hc *http.Client) *Client {
-	return &Client{hc, baseURL}
+	HTTP           *http.Client
+	SessionBaseURL string
 }
 
 func (m *Client) Profile(ctx context.Context, id string) (*jwt.MinecraftIdentity, error) {
-
 	id, err := utils.NormalizeUUID(id)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.sessionBaseURL+"/session/minecraft/profile/"+id, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.SessionBaseURL+"/session/minecraft/profile/"+id, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := m.hc.Do(req)
+	resp, err := m.HTTP.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +39,6 @@ func (m *Client) Profile(ctx context.Context, id string) (*jwt.MinecraftIdentity
 	}
 
 	var profile struct {
-		ID   string `json:"id"`
 		Name string `json:"name"`
 	}
 
@@ -64,7 +56,7 @@ var ErrNotJoined = errors.New("player has not joined the server")
 
 // HasJoined err 是 nil 就是已经进入了的
 func (m *Client) HasJoined(ctx context.Context, username, serverID string) error {
-	u, err := url.Parse(m.sessionBaseURL + "/session/minecraft/hasJoined")
+	u, err := url.Parse(m.SessionBaseURL + "/session/minecraft/hasJoined")
 	if err != nil {
 		return fmt.Errorf("invalid session URL: %w", err)
 	}
@@ -77,7 +69,7 @@ func (m *Client) HasJoined(ctx context.Context, username, serverID string) error
 	if err != nil {
 		return err
 	}
-	resp, err := m.hc.Do(req)
+	resp, err := m.HTTP.Do(req)
 	if err != nil {
 		return err
 	}

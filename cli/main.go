@@ -19,11 +19,11 @@ import (
 	_ "github.com/kaeman-dev/kaeman-public-api/docs"
 	"github.com/kaeman-dev/kaeman-public-api/gateway"
 	"github.com/kaeman-dev/kaeman-public-api/jwt"
-	"github.com/kaeman-dev/kaeman-public-api/logging"
 	"github.com/kaeman-dev/kaeman-public-api/minecraft"
 	"github.com/kaeman-dev/kaeman-public-api/router"
 	"github.com/kaeman-dev/kaeman-public-api/server"
 	"github.com/kaeman-dev/kaeman-public-api/storage"
+	"github.com/kaeman-dev/kaeman-public-api/utils"
 	gocache_lib "github.com/patrickmn/go-cache"
 	"github.com/redis/go-redis/v9"
 	"github.com/ulule/limiter/v3"
@@ -55,7 +55,7 @@ func main() {
 		},
 	})
 
-	logging.RedirectGIN(log.Logger)
+	utils.RedirectGIN(log.Logger)
 	slog.SetDefault(log.Logger)
 
 	cfg, err := config.Load(*configPath)
@@ -76,7 +76,7 @@ func main() {
 		DB:        db,
 		Log:       log.Logger,
 		Tokens:    &jwt.Token{Secret: []byte(cfg.Auth.JWTSecret)},
-		Minecraft: minecraft.New(cfg.Minecraft.MojangSessionBaseURL, http.DefaultClient),
+		Minecraft: &minecraft.Client{HTTP: http.DefaultClient, SessionBaseURL: cfg.Minecraft.MojangSessionBaseURL},
 		BSI:       &gateway.Hub{},
 	}
 
@@ -93,12 +93,11 @@ func main() {
 			os.Exit(1)
 		}
 		deps.Cache = cache.New[string](redis_store.NewRedis(client))
-		limiterStore, err := limiter_redisstore.NewStoreWithOptions(client, limiter.StoreOptions{})
+		deps.RateLimit, err = limiter_redisstore.NewStoreWithOptions(client, limiter.StoreOptions{})
 		if err != nil {
 			log.Error("initialize ratelimiter", "error", err)
 			os.Exit(1)
 		}
-		deps.RateLimit = limiterStore
 	} else {
 		deps.Cache = cache.New[string](go_cache_store.NewGoCache(gocache_lib.New(5*time.Minute, 10*time.Minute)))
 		deps.RateLimit = limiter_memstore.NewStore()

@@ -9,8 +9,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kaeman-dev/kaeman-public-api/response"
+	"github.com/kaeman-dev/kaeman-public-api/server"
 	"github.com/kaeman-dev/kaeman-public-api/utils"
 )
+
+type Handler struct{ Services *server.Services }
 
 type BSIType string
 
@@ -19,18 +22,10 @@ const (
 	BSITypeSplash BSIType = "splash"
 )
 
-type BSIPayload interface {
-	BSIChatRequest | BSISplashRequest |
-		BSIChatResponse | BSISplashResponse
-}
-
 type BSIChatRequest struct {
 	// Content 消息内容，不能为空白
 	Content string `json:"content" binding:"required" example:"Hello kaeman!"`
 }
-
-// 可以复用
-type BSIChatResponse BSIChatRequest
 
 type BSISplashRequest struct {
 	// Splasher 发起 splash 的玩家名
@@ -49,16 +44,13 @@ type BSISplashRequest struct {
 	Note string `json:"note,omitempty" example:"every 10 mins"`
 }
 
-// 可以复用
-type BSISplashResponse BSISplashRequest
-
-type BSIMessage[T BSIPayload] struct {
+type BSIMessage struct {
 	// ID 消息 ID，服务端签发的小写无横杠 UUID
 	ID string `json:"id,omitempty" example:"0f8f8c8e5d3c4b2a9e7d6c5b4a3f2e1d"`
 	// Type 消息类型
 	Type BSIType `json:"type"`
 	// Data 消息体
-	Data T `json:"data"`
+	Data any `json:"data"`
 }
 
 type BSIEnvelope struct {
@@ -83,46 +75,38 @@ type BSIEnvelope struct {
 // @Router /v1/services/bsi/queue [post]
 func (h Handler) Send(c *gin.Context) error {
 	var env BSIEnvelope
-	if err := response.Decode(c, &env); err != nil {
-		return response.New("Invalid request body").WithStatus(http.StatusBadRequest).Write(c)
+	if err := utils.DecodeJSON(http.MaxBytesReader(c.Writer, c.Request.Body, 16<<10), &env); err != nil {
+		return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
 	}
 
-	decode := func(target any) error {
-		d := json.NewDecoder(bytes.NewReader(env.Data))
-		d.DisallowUnknownFields()
-		return d.Decode(target)
-	}
-	broadcast := func(msg any) error {
-		data, err := json.Marshal(msg)
-		if err != nil {
-			return err
-		}
-		h.Services.BSI.Broadcast(data)
-		return response.NewData[any]("ok", nil).WithStatus(http.StatusAccepted).Write(c)
-	}
-
+	msg := BSIMessage{Type: env.Type}
 	switch env.Type {
 	case BSITypeChat:
-		req := BSIMessage[BSIChatRequest]{Type: BSITypeChat}
-		if err := decode(&req.Data); err != nil {
-			return response.New("Invalid request body").WithStatus(http.StatusBadRequest).Write(c)
+		var req BSIChatRequest
+		if err := utils.DecodeJSON(bytes.NewReader(env.Data), &req); err != nil {
+			return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
 		}
-		if strings.TrimSpace(req.Data.Content) == "" {
-			return response.New("Message must not be blank").WithStatus(http.StatusBadRequest).Write(c)
+		if strings.TrimSpace(req.Content) == "" {
+			return response.Write(c, http.StatusBadRequest, "Message must not be blank", nil)
 		}
-		req.ID = utils.NewUUID()
-		return broadcast(req)
+		msg.Data = req
 	case BSITypeSplash:
-		req := BSIMessage[BSISplashRequest]{Type: BSITypeSplash}
-		if err := decode(&req.Data); err != nil {
-			return response.New("Invalid request body").WithStatus(http.StatusBadRequest).Write(c)
+		var req BSISplashRequest
+		if err := utils.DecodeJSON(bytes.NewReader(env.Data), &req); err != nil {
+			return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
 		}
-		if req.Data.Time.IsZero() || strings.TrimSpace(req.Data.Lobby) == "" || req.Data.LobbyID < 1 {
-			return response.New("Valid time, lobby and lobbyID are required").WithStatus(http.StatusBadRequest).Write(c)
+		if req.Time.IsZero() || strings.TrimSpace(req.Lobby) == "" || req.LobbyID < 1 {
+			return response.Write(c, http.StatusBadRequest, "Valid time, lobby and lobbyID are required", nil)
 		}
-		req.ID = utils.NewUUID()
-		return broadcast(req)
+		msg.Data = req
 	default:
-		return response.New("Unknown message kind").WithStatus(http.StatusBadRequest).Write(c)
+		return response.Write(c, http.StatusBadRequest, "Unknown message kind", nil)
 	}
+	msg.ID = utils.NewUUID()
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	h.Services.BSI.Broadcast(data)
+	return response.Write(c, http.StatusAccepted, "ok", nil)
 }

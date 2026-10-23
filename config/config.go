@@ -76,15 +76,25 @@ func Load(path string) (*Config, error) {
 			},
 		},
 		Validate: func(cfg *Config) error {
-			return cfg.Validate()
+			cfg.Minecraft.MojangSessionBaseURL = strings.TrimRight(cfg.Minecraft.MojangSessionBaseURL, "/")
+			if err := validate.Struct(cfg); err != nil {
+				var fieldErrs validator.ValidationErrors
+				if !errors.As(err, &fieldErrs) {
+					return err
+				}
+				errs := make([]error, len(fieldErrs))
+				for i, fe := range fieldErrs {
+					errs[i] = fmt.Errorf("%s failed on the %q validation", strings.TrimPrefix(fe.Namespace(), "Config."), fe.Tag())
+				}
+				return errors.Join(errs...)
+			}
+			return nil
 		},
 	}
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		secret := make([]byte, 32)
-		if _, err := rand.Read(secret); err != nil {
-			return nil, fmt.Errorf("failed to generate jwt secret: %w", err)
-		}
+		rand.Read(secret)
 		loader.Default.Auth.JWTSecret = base64.RawURLEncoding.EncodeToString(secret)
 
 		if err := loader.Save(loader.Default, path); err != nil {
@@ -99,26 +109,4 @@ func Load(path string) (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func (cfg *Config) Validate() error {
-	if cfg == nil {
-		return errors.New("config must not be nil")
-	}
-
-	var errs error
-
-	cfg.Minecraft.MojangSessionBaseURL = strings.TrimRight(cfg.Minecraft.MojangSessionBaseURL, "/")
-	if err := validate.Struct(cfg); err != nil {
-		var fieldErrs validator.ValidationErrors
-		if errors.As(err, &fieldErrs) {
-			for _, fe := range fieldErrs {
-				errs = errors.Join(errs, fmt.Errorf("%s failed on the %q validation", strings.TrimPrefix(fe.Namespace(), "Config."), fe.Tag()))
-			}
-		} else {
-			return err
-		}
-	}
-
-	return errs
 }

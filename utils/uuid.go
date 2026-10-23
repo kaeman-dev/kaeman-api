@@ -2,8 +2,7 @@ package utils
 
 import (
 	"encoding/hex"
-
-	"github.com/google/uuid"
+	"uuid"
 )
 
 func NewUUID() string {

@@ -5,14 +5,19 @@ import (
 	"time"
 
 	"github.com/Sn0wo2/agnosco"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 var registry = agnosco.NewRegistry[gorm.Dialector]()
 
-func RegisterDriver(driver agnosco.Driver[gorm.Dialector]) {
-	registry.Register(driver)
+func init() {
+	registry.Register(agnosco.Driver[gorm.Dialector]{
+		Name:    "postgres",
+		Schemes: []string{"postgres", "postgresql"},
+		Open:    postgres.Open,
+	})
 }
 
 func Open(dsn string, log *slog.Logger) (*gorm.DB, error) {
@@ -20,11 +25,13 @@ func Open(dsn string, log *slog.Logger) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	gormLog := logger.New(slog.NewLogLogger(log.Handler(), slog.LevelError), logger.Config{
-		LogLevel:                  logger.Error,
-		IgnoreRecordNotFoundError: true,
+	db, err := gorm.Open(dialector, &gorm.Config{
+		Logger: logger.New(slog.NewLogLogger(log.Handler(), slog.LevelError), logger.Config{
+			LogLevel:                  logger.Error,
+			IgnoreRecordNotFoundError: true,
+		}),
+		NowFunc: func() time.Time { return time.Now().UTC() },
 	})
-	db, err := gorm.Open(dialector, &gorm.Config{Logger: gormLog, NowFunc: func() time.Time { return time.Now().UTC() }})
 	if err != nil {
 		return nil, err
 	}

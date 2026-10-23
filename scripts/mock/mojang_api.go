@@ -3,26 +3,28 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/kaeman-dev/kaeman-public-api/utils"
 )
 
 func main() {
+	log.SetFlags(0)
+	log.SetPrefix("error: ")
 	reader := bufio.NewReader(os.Stdin)
 	prompt := func(label string) string {
 		fmt.Print(label)
 		line, err := reader.ReadString('\n')
 		if err != nil && err != io.EOF {
-			fmt.Fprintln(os.Stderr, "error:", err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 		return strings.TrimSpace(line)
 	}
@@ -30,72 +32,45 @@ func main() {
 	accessToken := prompt("access token: ")
 	serverID := prompt("server id: ")
 	if accessToken == "" || serverID == "" {
-		fmt.Fprintln(os.Stderr, "error: access token and server id are required")
-		os.Exit(1)
+		log.Fatal("access token and server id are required")
 	}
 
-	parts := strings.Split(accessToken, ".")
-	if len(parts) != 3 {
-		fmt.Fprintln(os.Stderr, "error: access token is not a JWT")
-		os.Exit(1)
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
-	}
 	var claims struct {
+		jwt.RegisteredClaims
 		Profiles struct {
 			MC string `json:"mc"`
 		} `json:"profiles"`
 	}
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+	if _, _, err := jwt.NewParser().ParseUnverified(accessToken, &claims); err != nil {
+		log.Fatal(err)
 	}
 	if claims.Profiles.MC == "" {
-		fmt.Fprintln(os.Stderr, "error: access token carries no minecraft profile")
-		os.Exit(1)
+		log.Fatal("access token carries no minecraft profile")
 	}
 
 	profile, err := utils.NormalizeUUID(claims.Profiles.MC)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	body, err := json.Marshal(map[string]string{
+	body, _ := json.Marshal(map[string]string{
 		"accessToken":     accessToken,
 		"selectedProfile": profile,
 		"serverId":        serverID,
 	})
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
-	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://sessionserver.mojang.com/session/minecraft/join", bytes.NewReader(body))
+	resp, err := (&http.Client{Timeout: 15 * time.Second}).Post("https://sessionserver.mojang.com/session/minecraft/join", "application/json", bytes.NewReader(body))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
 	response, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		fmt.Fprintf(os.Stderr, "error: POST session/minecraft/join: HTTP %d %s\n", resp.StatusCode, strings.TrimSpace(string(response)))
-		os.Exit(1)
+		log.Fatalf("POST session/minecraft/join: HTTP %d %s", resp.StatusCode, strings.TrimSpace(string(response)))
 	}
 
 	fmt.Println("joined:", profile)

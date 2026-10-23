@@ -38,21 +38,21 @@ func (h Handler) Check(c *gin.Context) error {
 	claims := c.MustGet("publicAPIKey").(*jwt.Claims[jwt.PublicAPIClaimsData])
 	uid, err := uuid.Parse(claims.Data.UID)
 	if err != nil {
-		return response.New("Invalid public api key").WithStatus(http.StatusUnauthorized).Write(c)
+		return response.Write(c, http.StatusUnauthorized, "Invalid public api key", nil)
 	}
-	identities, err := storage.ListIdentitiesByUID(c.Request.Context(), h.Services.DB, uid)
-	if err != nil {
+	var identities []storage.KaemanIdentity
+	if err := h.Services.DB.WithContext(c.Request.Context()).Find(&identities, "uid = ?", uid).Error; err != nil {
 		return err
 	}
 	minecrafts := make([]string, 0, len(identities))
 	for _, identity := range identities {
-		if identity.Platform == storage.PlatformMinecraft {
+		if identity.Platform == "minecraft" {
 			minecrafts = append(minecrafts, identity.Identity)
 		}
 	}
-	return response.NewData("ok", CheckData{
+	return response.Write(c, http.StatusOK, "ok", CheckData{
 		Minecrafts:  minecrafts,
 		Permissions: *claims.Data.Permissions,
 		ExpiresAt:   claims.ExpiresAt.Time,
-	}).Write(c)
+	})
 }

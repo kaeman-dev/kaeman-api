@@ -144,7 +144,7 @@
         },
         "/v1/services/bsi/gateway": {
             "get": {
-                "description": "建立 WebSocket 连接后作为只读订阅者接收服务端推送的 BSIMessage 文本帧（JSON）：type 为 chat 时 data 为 BSIChatResponse，type 为 splash 时 data 为 BSISplashResponse。客户端发送会被 CloseRead 忽略，服务端每 30 秒 ping 一次，空闲写超时 5 秒。OpenAPI 不支持 WebSocket，仅作说明用。",
+                "description": "建立 WebSocket 连接后作为只读订阅者接收服务端推送的 BSIMessage 文本帧（JSON）：type 为 chat 时 data 为 BSIChatRequest，type 为 splash 时 data 为 BSISplashRequest。客户端发送会被 CloseRead 忽略，服务端每 30 秒 ping 一次，空闲写超时 5 秒。OpenAPI 不支持 WebSocket，仅作说明用。",
                 "tags": [
                     "services"
                 ],

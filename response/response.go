@@ -1,73 +1,29 @@
 package response
 
 import (
-	"encoding/json"
-	"errors"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Response[T any] struct {
-	status int
-
 	// Msg 响应消息，通用消息为 HTTP 状态文本，业务消息为具体语义
 	Msg string `json:"msg"`
 	// Data 响应数据，失败或无数据时省略
 	Data T `json:"data,omitempty"`
 }
 
-func New(msg string) Response[any] {
-	return Response[any]{
-		Msg: msg,
+func Write(c *gin.Context, status int, msg string, data any) error {
+	if msg == "" {
+		msg = http.StatusText(status)
 	}
-}
-
-func Status(status int) Response[any] {
-	return Response[any]{
-		status: status,
-		Msg:    http.StatusText(status),
-	}
-}
-
-func NewData[T any](msg string, data T) Response[T] {
-	return Response[T]{
-		Msg:  msg,
-		Data: data,
-	}
-}
-func (r Response[T]) WithStatus(status int) Response[T] {
-	r.status = status
-	return r
-}
-
-func (r Response[T]) Write(c *gin.Context) error {
 	switch {
-	case r.status == 0:
-		r.status = http.StatusOK
-	case r.status == http.StatusUnauthorized:
+	case status == http.StatusUnauthorized:
 		c.Header("WWW-Authenticate", "Bearer")
-	case r.status >= 400:
+	case status >= 400:
 		c.Header("Cache-Control", "no-store")
 	}
 
-	c.JSON(r.status, r)
-	return nil
-}
-
-func Decode[T any](c *gin.Context, target *T) error {
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16<<10)
-	d := json.NewDecoder(c.Request.Body)
-	d.DisallowUnknownFields()
-	if err := d.Decode(target); err != nil {
-		return err
-	}
-	if err := d.Decode(new(any)); err != io.EOF {
-		if err == nil {
-			return errors.New("body must contain single JSON value")
-		}
-		return err
-	}
+	c.JSON(status, Response[any]{Msg: msg, Data: data})
 	return nil
 }

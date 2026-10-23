@@ -1,18 +1,17 @@
 package api
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/gin-gonic/gin"
 	"github.com/kaeman-dev/kaeman-public-api/response"
+	"github.com/kaeman-dev/kaeman-public-api/server"
 	"github.com/kaeman-dev/kaeman-public-api/utils"
 )
 
-const (
-	challengeTTL       = 5 * time.Minute
-	challengeKeyPrefix = "kaeman:challenge:"
-)
+type Handler struct{ Services *server.Services }
 
 type Challenge struct {
 	// ServerID 一次性挑战 ID，小写无横杠 UUID，签发后 5 分钟内有效且只能消费一次
@@ -33,14 +32,14 @@ type Challenge struct {
 func (h Handler) Challenge(c *gin.Context) error {
 	serverID := utils.NewUUID()
 
-	if err := h.Services.Cache.Set(c.Request.Context(), challengeKeyPrefix+serverID, "", store.WithExpiration(challengeTTL)); err != nil {
+	if err := h.Services.Cache.Set(c.Request.Context(), "kaeman:challenge:"+serverID, "", store.WithExpiration(5*time.Minute)); err != nil {
 		return err
 	}
 
 	c.Header("Cache-Control", "no-store")
 
-	return response.NewData("take your challenge❤", Challenge{
+	return response.Write(c, http.StatusOK, "take your challenge❤", Challenge{
 		ServerID:  serverID,
-		ExpiresAt: time.Now().UTC().Add(challengeTTL),
-	}).Write(c)
+		ExpiresAt: time.Now().UTC().Add(5 * time.Minute),
+	})
 }
