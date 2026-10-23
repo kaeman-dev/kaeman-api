@@ -1,6 +1,6 @@
 module github.com/kaeman-dev/kaeman-public-api
 
-go 1.27.0
+go 1.27.3
 
 require (
 	github.com/Sn0wo2/agnosco v0.0.0-20260928051022-aadbf67de6e5
