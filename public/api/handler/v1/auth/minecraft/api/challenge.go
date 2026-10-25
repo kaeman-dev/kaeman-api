@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/eko/gocache/lib/v4/store"
-	"github.com/kaeman-dev/kaeman-api/public/response"
+	"github.com/kaeman-dev/kaeman-api/public/api/response"
 	"github.com/kaeman-dev/kaeman-api/shared"
 	"github.com/kaeman-dev/kaeman-api/shared/utils"
 	"github.com/labstack/echo/v4"

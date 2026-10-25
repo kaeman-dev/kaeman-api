@@ -3,6 +3,7 @@ module github.com/kaeman-dev/kaeman-api
 go 1.27.3
 
 require (
+	connectrpc.com/connect v1.19.1
 	github.com/Sn0wo2/agnosco v0.0.0-20260928051022-aadbf67de6e5
 	github.com/Sn0wo2/caelum v0.3.0
 	github.com/Sn0wo2/ordo v0.0.0-20260924234257-551a5fa7b264

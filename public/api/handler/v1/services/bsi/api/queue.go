@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kaeman-dev/kaeman-api/public/response"
+	"github.com/kaeman-dev/kaeman-api/public/api/response"
 	"github.com/kaeman-dev/kaeman-api/shared"
 	"github.com/kaeman-dev/kaeman-api/shared/utils"
 	"github.com/labstack/echo/v4"

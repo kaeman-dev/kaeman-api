@@ -1,12 +1,12 @@
-package public
+package api
 
 import (
 	"net/http"
 
-	auth "github.com/kaeman-dev/kaeman-api/public/handler/v1/auth/api"
-	minecraft "github.com/kaeman-dev/kaeman-api/public/handler/v1/auth/minecraft/api"
-	bsi "github.com/kaeman-dev/kaeman-api/public/handler/v1/services/bsi/api"
-	"github.com/kaeman-dev/kaeman-api/public/middleware"
+	auth "github.com/kaeman-dev/kaeman-api/public/api/handler/v1/auth/api"
+	minecraft "github.com/kaeman-dev/kaeman-api/public/api/handler/v1/auth/minecraft/api"
+	bsi "github.com/kaeman-dev/kaeman-api/public/api/handler/v1/services/bsi/api"
+	"github.com/kaeman-dev/kaeman-api/public/api/middleware"
 	"github.com/kaeman-dev/kaeman-api/shared"
 	"github.com/kaeman-dev/kaeman-api/shared/permission"
 	"github.com/labstack/echo/v4"
@@ -30,13 +30,14 @@ func Register(e *echo.Echo, deps *shared.Services) {
 	})
 	authRoutes := routes.Group("/v1/auth")
 	authRoutes.GET("/check", auth.Handler{Services: deps}.Check,
-		middleware.PublicAPIKey(deps, 0), middleware.RateLimit(deps.RateLimit))
+		middleware.APIKey(deps), middleware.RateLimit(deps.RateLimit))
 	minecraftRoutes := authRoutes.Group("/minecraft")
 	minecraftHandler := minecraft.Handler{Services: deps}
 	minecraftRoutes.GET("/challenge", minecraftHandler.Challenge, middleware.RateLimit(deps.RateLimit))
 	minecraftRoutes.POST("/verify", minecraftHandler.Verify, middleware.RateLimit(deps.RateLimit))
 	bsiRoutes := routes.Group("/v1/services/bsi")
-	bsiRoutes.POST("/queue", bsi.Handler{Services: deps}.Send,
+	bsiHandler := bsi.Handler{Services: deps}
+	bsiRoutes.POST("/queue", bsiHandler.Send,
 		middleware.PublicAPIKey(deps, permission.SplasherQueue), middleware.MinecraftToken(deps), middleware.RateLimit(deps.RateLimit))
-	bsiRoutes.GET("/gateway", bsi.Handler{Services: deps}.Listen)
+	bsiRoutes.GET("/gateway", bsiHandler.Listen)
 }

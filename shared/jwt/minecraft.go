@@ -7,19 +7,17 @@ import (
 	"uuid"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kaeman-dev/kaeman-api/shared/permission"
 	"github.com/kaeman-dev/kaeman-api/shared/utils"
 )
 
-type Claims[T PublicAPIClaimsData | MinecraftClaimsData] struct {
+const (
+	Issuer                   = "kaeman-api"
+	MinecraftSessionAudience = "minecraft-session"
+)
+
+type Claims[T any] struct {
 	jwt.RegisteredClaims
 	Data T `json:"data"`
-}
-
-type PublicAPIClaimsData struct {
-	UID         string                 `json:"uid"`
-	Permissions *permission.Permission `json:"permissions,omitempty"`
-	Ratelimit   *int                   `json:"ratelimit,omitempty"`
 }
 
 type MinecraftClaimsData struct {
@@ -47,8 +45,8 @@ func (t *Token) IssueMinecraft(mcIdentity MinecraftIdentity, lifetime time.Durat
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims[MinecraftClaimsData]{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.New().String(),
-			Issuer:    "kaeman-api",
-			Audience:  jwt.ClaimStrings{"minecraft-session"},
+			Issuer:    Issuer,
+			Audience:  jwt.ClaimStrings{MinecraftSessionAudience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(lifetime)),
 		},
@@ -68,8 +66,8 @@ func (t *Token) ParseMinecraft(value string) (*Claims[MinecraftClaimsData], erro
 			return t.Secret, nil
 		},
 		jwt.WithValidMethods([]string{"HS256"}),
-		jwt.WithIssuer("kaeman-api"),
-		jwt.WithAudience("minecraft-session"),
+		jwt.WithIssuer(Issuer),
+		jwt.WithAudience(MinecraftSessionAudience),
 		jwt.WithExpirationRequired(),
 		jwt.WithIssuedAt(),
 	)
@@ -91,35 +89,6 @@ func (t *Token) ParseMinecraft(value string) (*Claims[MinecraftClaimsData], erro
 	}
 
 	claims.Data.Minecraft.UUID = id
-
-	return &claims, nil
-}
-
-func (t *Token) ParsePublicAPI(value string) (*Claims[PublicAPIClaimsData], error) {
-	claims := Claims[PublicAPIClaimsData]{}
-
-	_, err := jwt.ParseWithClaims(
-		value,
-		&claims,
-		func(*jwt.Token) (any, error) {
-			return t.Secret, nil
-		},
-		jwt.WithValidMethods([]string{"HS256"}),
-		jwt.WithAudience("public-api"),
-		jwt.WithExpirationRequired(),
-		jwt.WithIssuedAt(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if claims.ID == "" {
-		return nil, errors.New("invalid public API identity")
-	}
-
-	if claims.Data.Permissions == nil || *claims.Data.Permissions == 0 || claims.Data.Ratelimit == nil || *claims.Data.Ratelimit == 0 {
-		return nil, errors.New("invalid public API permissions or ratelimit")
-	}
 
 	return &claims, nil
 }

@@ -2,16 +2,16 @@ package server
 
 import (
 	"fmt"
-	"github.com/kaeman-dev/kaeman-api/internal"
-	"github.com/kaeman-dev/kaeman-api/public"
-	"github.com/kaeman-dev/kaeman-api/public/middleware"
-	"github.com/kaeman-dev/kaeman-api/public/response"
+	"github.com/kaeman-dev/kaeman-api/internal/rpc"
+	"github.com/kaeman-dev/kaeman-api/public/api"
+	"github.com/kaeman-dev/kaeman-api/public/api/middleware"
+	"github.com/kaeman-dev/kaeman-api/public/api/response"
 	"github.com/kaeman-dev/kaeman-api/shared"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 
-func NewRouter(deps *shared.Services, services ...internal.Service) *echo.Echo {
+func NewRouter(deps *shared.Services, services ...rpc.Service) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -39,8 +39,8 @@ func NewRouter(deps *shared.Services, services ...internal.Service) *echo.Echo {
 			},
 		}))
 
-	public.Register(e, deps)
-	internal.Register(e, services...)
+	api.Register(e, deps)
+	rpc.Register(e, deps, services...)
 
 	return e
 }

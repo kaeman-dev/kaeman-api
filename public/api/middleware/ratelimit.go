@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kaeman-dev/kaeman-api/public/response"
+	"github.com/kaeman-dev/kaeman-api/public/api/response"
 	"github.com/kaeman-dev/kaeman-api/shared/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/ulule/limiter/v3"
@@ -17,10 +17,13 @@ func RateLimit(store limiter.Store) echo.MiddlewareFunc {
 			count := int64(60)
 			key := "kaeman:ratelimit:" + c.Path() + ":ip:" + c.RealIP()
 			if value := c.Get("publicAPIKey"); value != nil {
-				if claims, ok := value.(*jwt.Claims[jwt.PublicAPIClaimsData]); ok {
+				if claims, ok := value.(*jwt.APIKeyClaims); ok {
+					if claims.Data.HasRPC() {
+						return next(c)
+					}
 					key = "kaeman:ratelimit:" + c.Path() + ":key:" + claims.ID + ":" + c.RealIP()
-					if claims.Data.Ratelimit != nil && *claims.Data.Ratelimit > 0 {
-						count = int64(*claims.Data.Ratelimit)
+					if claims.Data.Public != nil && claims.Data.Public.API != nil && claims.Data.Public.API.Ratelimit != nil && *claims.Data.Public.API.Ratelimit > 0 {
+						count = int64(*claims.Data.Public.API.Ratelimit)
 					}
 				}
 			} else if value := c.Get("minecraftKey"); value != nil {

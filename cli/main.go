@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -108,6 +109,17 @@ func main() {
 	httpServer.Protocols.SetHTTP1(true)
 	httpServer.Protocols.SetUnencryptedHTTP2(true)
 
+	network, addr := "tcp", cfg.Server.ListenAddr
+	if path, ok := strings.CutPrefix(addr, "unix://"); ok {
+		network, addr = "unix", path
+	}
+	listener, err := net.Listen(network, addr)
+	if err != nil {
+		log.Error("listen HTTP", "address", cfg.Server.ListenAddr, "error", err)
+		os.Exit(1)
+	}
+	defer listener.Close()
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -115,7 +127,7 @@ func main() {
 
 	serveErr := make(chan error, 1)
 	go func() {
-		serveErr <- httpServer.ListenAndServe()
+		serveErr <- httpServer.Serve(listener)
 	}()
 
 	select {

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/kaeman-dev/kaeman-api/public/response"
+	"github.com/kaeman-dev/kaeman-api/public/api/response"
 	"github.com/labstack/echo/v4"
 )
 
