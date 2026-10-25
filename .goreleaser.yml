@@ -3,7 +3,7 @@ version: 2
 builds:
   - id: app
     main: ./cli
-    binary: kaeman-public-api
+    binary: kaeman-api
     env:
       - CGO_ENABLED=0
     goarch:

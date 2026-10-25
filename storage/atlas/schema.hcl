@@ -72,3 +72,39 @@ table "kaeman_identities" {
     ref_columns = [table.kaeman_users.column.uid]
   }
 }
+
+table "kaeman_channel_subscribe" {
+  schema = schema.public
+
+  column "platform" {
+    type = text
+    null = false
+  }
+
+  column "channel_id" {
+    type = text
+    null = false
+  }
+
+  column "events" {
+    type    = sql("text[]")
+    null    = false
+    default = sql("'{}'::text[]")
+  }
+
+  column "updated_at" {
+    type    = timestamptz
+    null    = false
+    default = sql("now()")
+  }
+
+  column "created_at" {
+    type    = timestamptz
+    null    = false
+    default = sql("now()")
+  }
+
+  primary_key {
+    columns = [column.platform, column.channel_id]
+  }
+}

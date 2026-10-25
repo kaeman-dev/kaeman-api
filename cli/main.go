@@ -15,15 +15,15 @@ import (
 	"github.com/eko/gocache/lib/v4/cache"
 	go_cache_store "github.com/eko/gocache/store/go_cache/v4"
 	redis_store "github.com/eko/gocache/store/redis/v4"
-	"github.com/kaeman-dev/kaeman-public-api/config"
-	_ "github.com/kaeman-dev/kaeman-public-api/docs"
-	"github.com/kaeman-dev/kaeman-public-api/gateway"
-	"github.com/kaeman-dev/kaeman-public-api/jwt"
-	"github.com/kaeman-dev/kaeman-public-api/minecraft"
-	"github.com/kaeman-dev/kaeman-public-api/router"
-	"github.com/kaeman-dev/kaeman-public-api/server"
-	"github.com/kaeman-dev/kaeman-public-api/storage"
-	"github.com/kaeman-dev/kaeman-public-api/utils"
+	"github.com/kaeman-dev/kaeman-api/config"
+	_ "github.com/kaeman-dev/kaeman-api/docs"
+	"github.com/kaeman-dev/kaeman-api/gateway"
+	"github.com/kaeman-dev/kaeman-api/jwt"
+	"github.com/kaeman-dev/kaeman-api/minecraft"
+	"github.com/kaeman-dev/kaeman-api/router"
+	"github.com/kaeman-dev/kaeman-api/server"
+	"github.com/kaeman-dev/kaeman-api/storage"
+	"github.com/kaeman-dev/kaeman-api/utils"
 	gocache_lib "github.com/patrickmn/go-cache"
 	"github.com/redis/go-redis/v9"
 	"github.com/ulule/limiter/v3"
@@ -33,7 +33,7 @@ import (
 
 //go:generate swag init -g cli/main.go --parseDependency --parseDepth 2
 
-// @title kaeman-public-api
+// @title kaeman-api
 // @version 1.0
 // @description Kaeman public API。除 /v1/auth/minecraft/challenge 与 /v1/services/bsi/gateway 外，所有端点都经过每分钟 N 次（N 默认 60，public API key 可通过 ratelimit claim 自定义）的限流，每次响应携带 RateLimit-Limit / RateLimit-Remaining / RateLimit-Reset（IETF draft-ietf-httpapi-ratelimit-headers）与 X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset 响应头，超限返回 429 并携带 Retry-After；意外错误统一返回 500 信封，data 中含 traceID。
 // @securityDefinitions.apikey BearerAuth

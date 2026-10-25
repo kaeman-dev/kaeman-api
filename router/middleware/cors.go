@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kaeman-dev/kaeman-public-api/response"
+	"github.com/kaeman-dev/kaeman-api/response"
 )
 
 func CORS() gin.HandlerFunc {

@@ -1,4 +1,4 @@
-BINARY_NAME ?= kaeman-public-api
+BINARY_NAME ?= kaeman-api
 
 .PHONY: lint lint-fix test build run clean models security ci release dry-release
 

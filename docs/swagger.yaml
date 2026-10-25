@@ -1,5 +1,5 @@
 definitions:
-  github_com_kaeman-dev_kaeman-public-api_response.Response-any:
+  github_com_kaeman-dev_kaeman-api_response.Response-any:
     properties:
       data:
         description: Data 响应数据，失败或无数据时省略
@@ -7,7 +7,7 @@ definitions:
         description: Msg 响应消息，通用消息为 HTTP 状态文本，业务消息为具体语义
         type: string
     type: object
-  github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_api_CheckData:
+  github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_api_CheckData:
     properties:
       data:
         allOf:
@@ -17,7 +17,7 @@ definitions:
         description: Msg 响应消息，通用消息为 HTTP 状态文本，业务消息为具体语义
         type: string
     type: object
-  github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge:
+  github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge:
     properties:
       data:
         allOf:
@@ -27,7 +27,7 @@ definitions:
         description: Msg 响应消息，通用消息为 HTTP 状态文本，业务消息为具体语义
         type: string
     type: object
-  github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData:
+  github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData:
     properties:
       data:
         allOf:
@@ -126,7 +126,7 @@ info:
   contact: {}
   description: Kaeman public API。除 /v1/auth/minecraft/challenge 与 /v1/services/bsi/gateway
     外，所有端点都经过令牌桶限流，超限返回 429 并携带 Retry-After 响应头；意外错误统一返回 500 信封，data 中含 traceID。
-  title: kaeman-public-api
+  title: kaeman-api
   version: "1.0"
 paths:
   /v1/auth/check:
@@ -135,19 +135,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_api_CheckData'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_api_CheckData'
         "401":
           description: Key required / Invalid public api key
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
       security:
       - BearerAuth: []
       summary: 查询 public api key 归属人绑定的 Minecraft 身份
@@ -165,15 +165,15 @@ paths:
               description: no-store
               type: string
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
       summary: 获取 Minecraft 会话验证挑战
       tags:
       - auth
@@ -198,24 +198,24 @@ paths:
               description: no-store
               type: string
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData'
         "400":
           description: Invalid request body / Invalid serverID / Invalid UUID
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "401":
           description: Invalid or expired challenge / Minecraft session verification
             failed / Challenge already used or expired
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
       summary: 验证 Minecraft 会话并换取会话 token
       tags:
       - auth
@@ -232,7 +232,7 @@ paths:
         "503":
           description: Service Unavailable（hub 已关闭）
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
       summary: BSI 实时消息 WebSocket 网关
       tags:
       - services
@@ -255,26 +255,26 @@ paths:
         "202":
           description: Accepted
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "400":
           description: Invalid request body / Message must not be blank / Valid time,
             lobby and lobbyID are required / Unknown message kind
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "401":
           description: Key required / Invalid public api key / Required permission
             missing / Invalid minecraft key / Minecraft identity not bound to this
             public api key
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any'
+            $ref: '#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any'
       security:
       - BearerAuth: []
       summary: 向 BSI 广播一条消息

@@ -5,6 +5,6 @@ FROM scratch
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ARG TARGETPLATFORM
-COPY $TARGETPLATFORM/kaeman-public-api /app/kaeman-public-api
+COPY $TARGETPLATFORM/kaeman-api /app/kaeman-api
 WORKDIR /app
-ENTRYPOINT ["/app/kaeman-public-api"]
+ENTRYPOINT ["/app/kaeman-api"]

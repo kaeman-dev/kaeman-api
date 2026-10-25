@@ -1,4 +1,4 @@
-module github.com/kaeman-dev/kaeman-public-api
+module github.com/kaeman-dev/kaeman-api
 
 go 1.27.3
 

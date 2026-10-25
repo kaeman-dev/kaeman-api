@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kaeman-dev/kaeman-public-api/utils"
+	"github.com/kaeman-dev/kaeman-api/utils"
 )
 
 func main() {

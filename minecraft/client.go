@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/kaeman-dev/kaeman-public-api/jwt"
-	"github.com/kaeman-dev/kaeman-public-api/utils"
+	"github.com/kaeman-dev/kaeman-api/jwt"
+	"github.com/kaeman-dev/kaeman-api/utils"
 )
 
 type Client struct {

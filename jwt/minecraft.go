@@ -7,8 +7,8 @@ import (
 	"uuid"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kaeman-dev/kaeman-public-api/permission"
-	"github.com/kaeman-dev/kaeman-public-api/utils"
+	"github.com/kaeman-dev/kaeman-api/permission"
+	"github.com/kaeman-dev/kaeman-api/utils"
 )
 
 type Claims[T PublicAPIClaimsData | MinecraftClaimsData] struct {
@@ -47,7 +47,7 @@ func (t *Token) IssueMinecraft(mcIdentity MinecraftIdentity, lifetime time.Durat
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims[MinecraftClaimsData]{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.New().String(),
-			Issuer:    "kaeman-public-api",
+			Issuer:    "kaeman-api",
 			Audience:  jwt.ClaimStrings{"minecraft-session"},
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(lifetime)),
@@ -68,7 +68,7 @@ func (t *Token) ParseMinecraft(value string) (*Claims[MinecraftClaimsData], erro
 			return t.Secret, nil
 		},
 		jwt.WithValidMethods([]string{"HS256"}),
-		jwt.WithIssuer("kaeman-public-api"),
+		jwt.WithIssuer("kaeman-api"),
 		jwt.WithAudience("minecraft-session"),
 		jwt.WithExpirationRequired(),
 		jwt.WithIssuedAt(),

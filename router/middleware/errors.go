@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"github.com/kaeman-dev/kaeman-public-api/response"
+	"github.com/kaeman-dev/kaeman-api/response"
 )
 
 func Chain(h func(*gin.Context) error, mws ...func(*gin.Context) error) gin.HandlerFunc {

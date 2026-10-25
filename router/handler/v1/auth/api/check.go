@@ -7,11 +7,11 @@ import (
 	"uuid"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kaeman-dev/kaeman-public-api/jwt"
-	"github.com/kaeman-dev/kaeman-public-api/permission"
-	"github.com/kaeman-dev/kaeman-public-api/response"
-	"github.com/kaeman-dev/kaeman-public-api/server"
-	"github.com/kaeman-dev/kaeman-public-api/storage"
+	"github.com/kaeman-dev/kaeman-api/jwt"
+	"github.com/kaeman-dev/kaeman-api/permission"
+	"github.com/kaeman-dev/kaeman-api/response"
+	"github.com/kaeman-dev/kaeman-api/server"
+	"github.com/kaeman-dev/kaeman-api/storage"
 )
 
 type Handler struct{ Services *server.Services }

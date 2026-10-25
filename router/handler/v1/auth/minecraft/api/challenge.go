@@ -6,9 +6,9 @@ import (
 
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/gin-gonic/gin"
-	"github.com/kaeman-dev/kaeman-public-api/response"
-	"github.com/kaeman-dev/kaeman-public-api/server"
-	"github.com/kaeman-dev/kaeman-public-api/utils"
+	"github.com/kaeman-dev/kaeman-api/response"
+	"github.com/kaeman-dev/kaeman-api/server"
+	"github.com/kaeman-dev/kaeman-api/utils"
 )
 
 type Handler struct{ Services *server.Services }

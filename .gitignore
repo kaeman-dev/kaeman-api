@@ -38,4 +38,4 @@ Makefile.local
 kaeman.db
 kaeman.db-*
 dist/
-/kaeman-public-api
+/kaeman-api

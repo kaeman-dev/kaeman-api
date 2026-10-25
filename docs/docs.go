@@ -30,25 +30,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_api_CheckData"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_api_CheckData"
                         }
                     },
                     "401": {
                         "description": "Key required / Invalid public api key",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     }
                 }
@@ -65,7 +65,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge"
                         },
                         "headers": {
                             "Cache-Control": {
@@ -77,13 +77,13 @@ const docTemplate = `{
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     }
                 }
@@ -114,7 +114,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData"
                         },
                         "headers": {
                             "Cache-Control": {
@@ -126,25 +126,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body / Invalid serverID / Invalid UUID",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "401": {
                         "description": "Invalid or expired challenge / Minecraft session verification failed / Challenge already used or expired",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     }
                 }
@@ -167,7 +167,7 @@ const docTemplate = `{
                     "503": {
                         "description": "Service Unavailable（hub 已关闭）",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     }
                 }
@@ -203,31 +203,31 @@ const docTemplate = `{
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "400": {
                         "description": "Invalid request body / Message must not be blank / Valid time, lobby and lobbyID are required / Unknown message kind",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "401": {
                         "description": "Key required / Invalid public api key / Required permission missing / Invalid minecraft key / Minecraft identity not bound to this public api key",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-public-api_response.Response-any"
+                            "$ref": "#/definitions/github_com_kaeman-dev_kaeman-api_response.Response-any"
                         }
                     }
                 }
@@ -235,7 +235,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_kaeman-dev_kaeman-public-api_response.Response-any": {
+        "github_com_kaeman-dev_kaeman-api_response.Response-any": {
             "type": "object",
             "properties": {
                 "data": {
@@ -247,7 +247,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_api_CheckData": {
+        "github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_api_CheckData": {
             "type": "object",
             "properties": {
                 "data": {
@@ -264,7 +264,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge": {
+        "github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_Challenge": {
             "type": "object",
             "properties": {
                 "data": {
@@ -281,7 +281,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_kaeman-dev_kaeman-public-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData": {
+        "github_com_kaeman-dev_kaeman-api_response.Response-router_handler_v1_auth_minecraft_api_VerifyData": {
             "type": "object",
             "properties": {
                 "data": {
@@ -431,7 +431,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "kaeman-public-api",
+	Title:            "kaeman-api",
 	Description:      "Kaeman public API。除 /v1/auth/minecraft/challenge 与 /v1/services/bsi/gateway 外，所有端点都经过令牌桶限流，超限返回 429 并携带 Retry-After 响应头；意外错误统一返回 500 信封，data 中含 traceID。",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
