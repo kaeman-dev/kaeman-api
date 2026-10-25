@@ -21,7 +21,7 @@ clean:
 	rm -f $(BINARY_NAME) $(BINARY_NAME).exe
 
 models:
-	@atlas schema inspect --config storage/atlas/atlas.hcl --env generate --url env://src > storage/models_gen.go && gofmt -w storage/models_gen.go
+	@atlas schema inspect --config shared/storage/atlas/atlas.hcl --env generate --url env://src > shared/storage/models_gen.go && gofmt -w shared/storage/models_gen.go
 
 security:
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
