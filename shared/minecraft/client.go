@@ -18,11 +18,12 @@ type Client struct {
 	SessionBaseURL string
 }
 
-func (m *Client) Profile(ctx context.Context, id string) (*jwt.MinecraftIdentity, error) {
+func (m *Client) Profile(ctx context.Context, id string) (identity *jwt.MinecraftIdentity, retErr error) {
 	id, err := utils.NormalizeUUID(id)
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.SessionBaseURL+"/session/minecraft/profile/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -32,10 +33,12 @@ func (m *Client) Profile(ctx context.Context, id string) (*jwt.MinecraftIdentity
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		retErr = errors.Join(retErr, resp.Body.Close())
+	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Mojang profile HTTP status: %d (uuid %s)", resp.StatusCode, id)
+		return nil, fmt.Errorf("mojang profile HTTP status: %d (uuid %s)", resp.StatusCode, id)
 	}
 
 	var profile struct {
@@ -55,11 +58,12 @@ func (m *Client) Profile(ctx context.Context, id string) (*jwt.MinecraftIdentity
 var ErrNotJoined = errors.New("player has not joined the server")
 
 // HasJoined err 是 nil 就是已经进入了的
-func (m *Client) HasJoined(ctx context.Context, username, serverID string) error {
+func (m *Client) HasJoined(ctx context.Context, username, serverID string) (retErr error) {
 	u, err := url.Parse(m.SessionBaseURL + "/session/minecraft/hasJoined")
 	if err != nil {
 		return fmt.Errorf("invalid session URL: %w", err)
 	}
+
 	query := u.Query()
 	query.Set("username", username)
 	query.Set("serverId", serverID)
@@ -69,11 +73,14 @@ func (m *Client) HasJoined(ctx context.Context, username, serverID string) error
 	if err != nil {
 		return err
 	}
+
 	resp, err := m.HTTP.Do(req)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		retErr = errors.Join(retErr, resp.Body.Close())
+	}()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -81,6 +88,6 @@ func (m *Client) HasJoined(ctx context.Context, username, serverID string) error
 	case http.StatusNoContent:
 		return ErrNotJoined
 	default:
-		return fmt.Errorf("Mojang hasJoined HTTP status: %d (username %s)", resp.StatusCode, username)
+		return fmt.Errorf("mojang hasJoined HTTP status: %d (username %s)", resp.StatusCode, username)
 	}
 }

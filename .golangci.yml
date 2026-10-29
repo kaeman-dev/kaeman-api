@@ -82,6 +82,10 @@ linters:
       rules:
         - name: var-declaration
 
+  exclusions:
+    paths:
+      - docs/docs.go
+
 run:
   concurrency: 4
   timeout: 5m

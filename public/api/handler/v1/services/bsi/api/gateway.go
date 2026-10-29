@@ -18,10 +18,13 @@ func (h Handler) Listen(c echo.Context) error {
 		if status != 0 {
 			return echo.NewHTTPError(status).SetInternal(err)
 		}
+
 		return err
 	}
+
 	if status != 0 {
 		return response.Write(c, status, "", nil)
 	}
+
 	return nil
 }

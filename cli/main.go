@@ -41,7 +41,12 @@ import (
 // @name Authorization
 // @description Bearer JWT。public API key 的 audience 为 public-api，携带 uid/permissions/ratelimit claims；Minecraft 会话 token 的 audience 为 minecraft-session，携带 minecraft identity claims。
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	configPath := flag.String("config", "./data/config.toml", "path to the TOML config file")
+
 	flag.Parse()
 
 	style := caelum.DefaultStyle()
@@ -60,16 +65,28 @@ func main() {
 	cfg, err := config.Load(*configPath)
 	if err != nil {
 		log.Error("load config", "error", err)
-		os.Exit(1)
+
+		return 1
 	}
 
 	db, err := storage.Open(cfg.Database.DSN, log.Logger)
 	if err != nil {
 		log.Error("initialize database", "error", err)
-		os.Exit(1)
+
+		return 1
 	}
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Error("get database connection", "error", err)
+
+		return 1
+	}
+	defer func() {
+		if err := sqlDB.Close(); err != nil {
+			log.Error("close database connection", "error", err)
+		}
+	}()
 
 	deps := &shared.Services{
 		DB:        db,
@@ -81,21 +98,32 @@ func main() {
 
 	if cfg.Redis.Addr != "" {
 		network := "tcp"
+
 		addr := cfg.Redis.Addr
 		if path, ok := strings.CutPrefix(addr, "unix://"); ok {
 			network, addr = "unix", path
 		}
+
 		client := redis.NewClient(&redis.Options{Network: network, Addr: addr, Password: cfg.Redis.Password})
+		defer func() {
+			if err := client.Close(); err != nil {
+				log.Error("close Redis", "error", err)
+			}
+		}()
+
 		if err := client.Ping(context.Background()).Err(); err != nil {
-			client.Close()
 			log.Error("connect to Redis", "error", err)
-			os.Exit(1)
+
+			return 1
 		}
+
 		deps.Cache = cache.New[string](redis_store.NewRedis(client))
+
 		deps.RateLimit, err = limiter_redisstore.NewStoreWithOptions(client, limiter.StoreOptions{})
 		if err != nil {
 			log.Error("initialize ratelimiter", "error", err)
-			os.Exit(1)
+
+			return 1
 		}
 	} else {
 		deps.Cache = cache.New[string](go_cache_store.NewGoCache(gocache_lib.New(5*time.Minute, 10*time.Minute)))
@@ -104,7 +132,7 @@ func main() {
 
 	e := server.NewRouter(deps)
 	e.Debug = cfg.Server.Debug
-	httpServer := &http.Server{Addr: cfg.Server.ListenAddr, Handler: e, ErrorLog: slog.NewLogLogger(log.Logger.Handler(), slog.LevelError), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
+	httpServer := &http.Server{Addr: cfg.Server.ListenAddr, Handler: e, ErrorLog: slog.NewLogLogger(log.Handler(), slog.LevelError), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
 	httpServer.Protocols = new(http.Protocols)
 	httpServer.Protocols.SetHTTP1(true)
 	httpServer.Protocols.SetUnencryptedHTTP2(true)
@@ -113,12 +141,18 @@ func main() {
 	if path, ok := strings.CutPrefix(addr, "unix://"); ok {
 		network, addr = "unix", path
 	}
+
 	listener, err := net.Listen(network, addr)
 	if err != nil {
 		log.Error("listen HTTP", "address", cfg.Server.ListenAddr, "error", err)
-		os.Exit(1)
+
+		return 1
 	}
-	defer listener.Close()
+	defer func() {
+		if err := listener.Close(); err != nil {
+			log.Error("close HTTP listener", "error", err)
+		}
+	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -133,14 +167,22 @@ func main() {
 	select {
 	case err := <-serveErr:
 		log.Error("serve HTTP", "error", err)
-		os.Exit(1)
+
+		return 1
 	case <-ctx.Done():
 		deps.BSI.Close()
+
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			log.Error("shutdown HTTP", "error", err)
-			httpServer.Close()
+
+			if err := httpServer.Close(); err != nil {
+				log.Error("close HTTP server", "error", err)
+			}
 		}
 	}
+
+	return 0
 }

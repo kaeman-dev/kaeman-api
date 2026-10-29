@@ -45,6 +45,7 @@ func WithAPIKey(ctx context.Context, claims *APIKeyClaims) context.Context {
 
 func APIKeyFromContext(ctx context.Context) (*APIKeyClaims, bool) {
 	claims, ok := ctx.Value(apiKeyContextKey{}).(*APIKeyClaims)
+
 	return claims, ok && claims != nil
 }
 
@@ -52,11 +53,13 @@ func (t *Token) IssueAPIKey(subject string, data APIKeyData, lifetime time.Durat
 	if subject == "" {
 		return "", errors.New("API key subject is required")
 	}
+
 	if lifetime <= 0 {
 		return "", errors.New("API key lifetime must be positive")
 	}
 
 	now := time.Now().UTC()
+
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, &APIKeyClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.New().String(),
@@ -72,6 +75,7 @@ func (t *Token) IssueAPIKey(subject string, data APIKeyData, lifetime time.Durat
 
 func (t *Token) ParseAPIKey(value string) (*APIKeyClaims, error) {
 	claims := APIKeyClaims{}
+
 	_, err := jwt.ParseWithClaims(
 		value,
 		&claims,
@@ -91,5 +95,6 @@ func (t *Token) ParseAPIKey(value string) (*APIKeyClaims, error) {
 	if claims.Issuer == "" || claims.Subject == "" || claims.ID == "" || len(claims.Audience) == 0 || claims.IssuedAt == nil || claims.ExpiresAt == nil {
 		return nil, errors.New("invalid API key registered claims")
 	}
+
 	return &claims, nil
 }

@@ -15,9 +15,9 @@ type Handler struct{ Services *shared.Services }
 
 type Challenge struct {
 	// ServerID 一次性挑战 ID，小写无横杠 UUID，签发后 5 分钟内有效且只能消费一次
-	ServerID string `json:"serverID" example:"0f8f8c8e5d3c4b2a9e7d6c5b4a3f2e1d"`
+	ServerID string `example:"0f8f8c8e5d3c4b2a9e7d6c5b4a3f2e1d" json:"serverID"`
 	// ExpiresAt 挑战过期时间
-	ExpiresAt time.Time `json:"expiresAt" example:"2026-09-29T12:05:00Z"`
+	ExpiresAt time.Time `example:"2026-09-29T12:05:00Z" json:"expiresAt"`
 }
 
 // Challenge godoc
