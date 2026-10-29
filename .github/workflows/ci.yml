@@ -18,8 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      autofix: ${{ steps.patch.outputs.changed }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -67,34 +65,3 @@ jobs:
           go-version-file: go.mod
           cache: false
           repo-checkout: false
-
-  autofix:
-    needs: check
-    if: >-
-      !cancelled() && needs.check.outputs.autofix == 'true' &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          persist-credentials: false
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: lint-fixes
-          path: ${{ runner.temp }}/lint-fixes
-
-      - run: git apply "$RUNNER_TEMP/lint-fixes/lint-fixes.patch"
-
-      - uses: peter-evans/create-pull-request@v8
-        with:
-          commit-message: "chore(autofix): formatting and lint"
-          branch: auto-fix/go-${{ github.event.pull_request.number || github.ref_name }}
-          delete-branch: true
-          title: "chore(autofix): formatting and lint"
-          body: "Automated golangci-lint fixes from CI"
-          labels: automated,go
