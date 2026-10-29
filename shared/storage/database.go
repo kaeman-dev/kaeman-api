@@ -25,6 +25,7 @@ func Open(dsn string, log *slog.Logger) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.New(slog.NewLogLogger(log.Handler(), slog.LevelError), logger.Config{
 			LogLevel:                  logger.Error,
@@ -35,10 +36,13 @@ func Open(dsn string, log *slog.Logger) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	connection, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
+
 	connection.SetMaxOpenConns(1)
+
 	return db, nil
 }

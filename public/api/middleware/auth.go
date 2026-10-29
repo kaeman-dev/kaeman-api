@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-
 	"uuid"
 
 	"github.com/kaeman-dev/kaeman-api/public/api/response"
@@ -24,8 +23,10 @@ func APIKey(deps *shared.Services) echo.MiddlewareFunc {
 			if err != nil {
 				return false, err
 			}
+
 			c.Set("publicAPIKey", claims)
 			c.SetRequest(c.Request().WithContext(jwt.WithAPIKey(c.Request().Context(), claims)))
+
 			return true, nil
 		},
 		ErrorHandler: func(err error, c echo.Context) error {
@@ -33,6 +34,7 @@ func APIKey(deps *shared.Services) echo.MiddlewareFunc {
 			if errors.As(err, &missing) && strings.TrimSpace(c.Request().Header.Get(echo.HeaderAuthorization)) == "" {
 				return response.Write(c, http.StatusUnauthorized, "Key required", nil)
 			}
+
 			return response.Write(c, http.StatusUnauthorized, "Invalid API key", nil)
 		},
 	})
@@ -46,14 +48,17 @@ func PublicAPIKey(deps *shared.Services, pms permission.Permission) echo.Middlew
 				if claims.Data.Public == nil || claims.Data.Public.API == nil {
 					return response.Write(c, http.StatusUnauthorized, "Not a public API key", nil)
 				}
+
 				api := claims.Data.Public.API
 				if api.Permissions == nil || *api.Permissions == 0 || api.Ratelimit == nil || *api.Ratelimit == 0 {
 					return response.Write(c, http.StatusUnauthorized, "Invalid public API permissions or ratelimit", nil)
 				}
+
 				if pms != 0 && *api.Permissions&pms != pms {
 					return response.Write(c, http.StatusUnauthorized, "Required permission missing", nil)
 				}
 			}
+
 			return next(c)
 		})
 	}
@@ -66,7 +71,9 @@ func MinecraftToken(deps *shared.Services) echo.MiddlewareFunc {
 			if err != nil {
 				return false, err
 			}
+
 			c.Set("minecraftKey", claims)
+
 			return true, nil
 		},
 		ErrorHandler: func(err error, c echo.Context) error {
@@ -74,9 +81,11 @@ func MinecraftToken(deps *shared.Services) echo.MiddlewareFunc {
 			if errors.As(err, &missing) && strings.TrimSpace(c.Request().Header.Get(echo.HeaderAuthorization)) == "" {
 				return response.Write(c, http.StatusUnauthorized, "Key required", nil)
 			}
+
 			return response.Write(c, http.StatusUnauthorized, "Invalid minecraft key", nil)
 		},
 	})
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return keyAuth(func(c echo.Context) error {
 			claims := c.Get("minecraftKey").(*jwt.Claims[jwt.MinecraftClaimsData])
@@ -85,22 +94,28 @@ func MinecraftToken(deps *shared.Services) echo.MiddlewareFunc {
 				if !ok {
 					return errors.New("unexpected publicAPIKey claims type")
 				}
+
 				if pub.Data.HasRPC() {
 					return next(c)
 				}
+
 				ownerUID, err := uuid.Parse(pub.Data.Public.API.UID)
 				if err != nil {
 					return response.Write(c, http.StatusUnauthorized, "Invalid public api key", nil)
 				}
+
 				var bound storage.KaemanIdentity
+
 				err = deps.DB.WithContext(c.Request().Context()).First(&bound, "platform = ? AND identity = ?", "minecraft", claims.Data.Minecraft.UUID).Error
 				if errors.Is(err, gorm.ErrRecordNotFound) || (err == nil && bound.UID != ownerUID) {
 					return response.Write(c, http.StatusUnauthorized, "Minecraft identity not bound to this public api key", nil)
 				}
+
 				if err != nil {
 					return err
 				}
 			}
+
 			return next(c)
 		})
 	}

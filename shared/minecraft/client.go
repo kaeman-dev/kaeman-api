@@ -23,6 +23,7 @@ func (m *Client) Profile(ctx context.Context, id string) (*jwt.MinecraftIdentity
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.SessionBaseURL+"/session/minecraft/profile/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -60,6 +61,7 @@ func (m *Client) HasJoined(ctx context.Context, username, serverID string) error
 	if err != nil {
 		return fmt.Errorf("invalid session URL: %w", err)
 	}
+
 	query := u.Query()
 	query.Set("username", username)
 	query.Set("serverId", serverID)
@@ -69,6 +71,7 @@ func (m *Client) HasJoined(ctx context.Context, username, serverID string) error
 	if err != nil {
 		return err
 	}
+
 	resp, err := m.HTTP.Do(req)
 	if err != nil {
 		return err

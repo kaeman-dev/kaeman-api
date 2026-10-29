@@ -7,6 +7,7 @@ import (
 
 func NewUUID() string {
 	id := uuid.New()
+
 	return hex.EncodeToString(id[:])
 }
 
@@ -15,5 +16,6 @@ func NormalizeUUID(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(u[:]), nil
 }

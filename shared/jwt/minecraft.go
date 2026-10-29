@@ -38,6 +38,7 @@ func (t *Token) IssueMinecraft(mcIdentity MinecraftIdentity, lifetime time.Durat
 	if err != nil {
 		return "", err
 	}
+
 	mcIdentity.UUID = id
 
 	now := time.Now().UTC()

@@ -26,6 +26,7 @@ func Register(e *echo.Echo, deps *shared.Services) {
 		if !e.Debug {
 			return echo.ErrNotFound
 		}
+
 		return echoSwagger.WrapHandler(c)
 	})
 	authRoutes := routes.Group("/v1/auth")
@@ -35,6 +36,7 @@ func Register(e *echo.Echo, deps *shared.Services) {
 	minecraftHandler := minecraft.Handler{Services: deps}
 	minecraftRoutes.GET("/challenge", minecraftHandler.Challenge, middleware.RateLimit(deps.RateLimit))
 	minecraftRoutes.POST("/verify", minecraftHandler.Verify, middleware.RateLimit(deps.RateLimit))
+
 	bsiRoutes := routes.Group("/v1/services/bsi")
 	bsiHandler := bsi.Handler{Services: deps}
 	bsiRoutes.POST("/queue", bsiHandler.Send,

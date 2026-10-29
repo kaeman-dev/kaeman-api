@@ -42,6 +42,7 @@ import (
 // @description Bearer JWT。public API key 的 audience 为 public-api，携带 uid/permissions/ratelimit claims；Minecraft 会话 token 的 audience 为 minecraft-session，携带 minecraft identity claims。
 func main() {
 	configPath := flag.String("config", "./data/config.toml", "path to the TOML config file")
+
 	flag.Parse()
 
 	style := caelum.DefaultStyle()
@@ -68,6 +69,7 @@ func main() {
 		log.Error("initialize database", "error", err)
 		os.Exit(1)
 	}
+
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 
@@ -81,17 +83,21 @@ func main() {
 
 	if cfg.Redis.Addr != "" {
 		network := "tcp"
+
 		addr := cfg.Redis.Addr
 		if path, ok := strings.CutPrefix(addr, "unix://"); ok {
 			network, addr = "unix", path
 		}
+
 		client := redis.NewClient(&redis.Options{Network: network, Addr: addr, Password: cfg.Redis.Password})
 		if err := client.Ping(context.Background()).Err(); err != nil {
 			client.Close()
 			log.Error("connect to Redis", "error", err)
 			os.Exit(1)
 		}
+
 		deps.Cache = cache.New[string](redis_store.NewRedis(client))
+
 		deps.RateLimit, err = limiter_redisstore.NewStoreWithOptions(client, limiter.StoreOptions{})
 		if err != nil {
 			log.Error("initialize ratelimiter", "error", err)
@@ -104,7 +110,7 @@ func main() {
 
 	e := server.NewRouter(deps)
 	e.Debug = cfg.Server.Debug
-	httpServer := &http.Server{Addr: cfg.Server.ListenAddr, Handler: e, ErrorLog: slog.NewLogLogger(log.Logger.Handler(), slog.LevelError), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
+	httpServer := &http.Server{Addr: cfg.Server.ListenAddr, Handler: e, ErrorLog: slog.NewLogLogger(log.Handler(), slog.LevelError), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
 	httpServer.Protocols = new(http.Protocols)
 	httpServer.Protocols.SetHTTP1(true)
 	httpServer.Protocols.SetUnencryptedHTTP2(true)
@@ -113,6 +119,7 @@ func main() {
 	if path, ok := strings.CutPrefix(addr, "unix://"); ok {
 		network, addr = "unix", path
 	}
+
 	listener, err := net.Listen(network, addr)
 	if err != nil {
 		log.Error("listen HTTP", "address", cfg.Server.ListenAddr, "error", err)
@@ -136,8 +143,10 @@ func main() {
 		os.Exit(1)
 	case <-ctx.Done():
 		deps.BSI.Close()
+
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			log.Error("shutdown HTTP", "error", err)
 			httpServer.Close()

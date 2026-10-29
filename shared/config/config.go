@@ -31,13 +31,14 @@ func init() {
 		if name == "" {
 			name = field.Name
 		}
+
 		return name
 	})
 }
 
 type Server struct {
 	Debug        bool     `toml:"debug"`
-	ListenAddr   string   `toml:"listen_addr" validate:"required"`
+	ListenAddr   string   `toml:"listen_addr"             validate:"required"`
 	TrustProxies []string `toml:"trust_proxies,omitempty" validate:"omitempty,dive,ip|cidr"`
 }
 
@@ -84,12 +85,15 @@ func Load(path string) (*Config, error) {
 				if !errors.As(err, &fieldErrs) {
 					return err
 				}
+
 				errs := make([]error, len(fieldErrs))
 				for i, fe := range fieldErrs {
 					errs[i] = fmt.Errorf("%s failed on the %q validation", strings.TrimPrefix(fe.Namespace(), "Config."), fe.Tag())
 				}
+
 				return errors.Join(errs...)
 			}
+
 			return nil
 		},
 	}
@@ -102,6 +106,7 @@ func Load(path string) (*Config, error) {
 		if err := loader.Save(loader.Default, path); err != nil {
 			return nil, fmt.Errorf("failed to create default config file %s: %w", path, err)
 		}
+
 		return nil, fmt.Errorf("default config file created at %s, please edit it and restart", path)
 	}
 

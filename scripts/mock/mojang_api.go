@@ -19,17 +19,21 @@ import (
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix("error: ")
+
 	reader := bufio.NewReader(os.Stdin)
 	prompt := func(label string) string {
 		fmt.Print(label)
+
 		line, err := reader.ReadString('\n')
 		if err != nil && err != io.EOF {
 			log.Fatal(err)
 		}
+
 		return strings.TrimSpace(line)
 	}
 
 	accessToken := prompt("access token: ")
+
 	serverID := prompt("server id: ")
 	if accessToken == "" || serverID == "" {
 		log.Fatal("access token and server id are required")
@@ -44,6 +48,7 @@ func main() {
 	if _, _, err := jwt.NewParser().ParseUnverified(accessToken, &claims); err != nil {
 		log.Fatal(err)
 	}
+
 	if claims.Profiles.MC == "" {
 		log.Fatal("access token carries no minecraft profile")
 	}
@@ -69,6 +74,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Fatalf("POST session/minecraft/join: HTTP %d %s", resp.StatusCode, strings.TrimSpace(string(response)))
 	}

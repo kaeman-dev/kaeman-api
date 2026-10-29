@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/kaeman-dev/kaeman-api/internal/rpc"
 	"github.com/kaeman-dev/kaeman-api/public/api"
 	"github.com/kaeman-dev/kaeman-api/public/api/middleware"
@@ -26,8 +27,9 @@ func NewRouter(deps *shared.Services, services ...rpc.Service) *echo.Echo {
 			LogStatus:   true,
 			LogLatency:  true,
 			LogValuesFunc: func(c echo.Context, v echomiddleware.RequestLoggerValues) error {
-				deps.Log.InfoContext(c.Request().Context(), "http request", "trace_id", c.Response().Header().Get("Trace-ID"),
+				deps.Log.InfoContext(c.Request().Context(), "http request", "trace_id", c.Response().Header().Get("Trace-Id"),
 					"method", v.Method, "path", v.URIPath, "status", v.Status, "duration", v.Latency)
+
 				return nil
 			},
 		}),
@@ -35,7 +37,7 @@ func NewRouter(deps *shared.Services, services ...rpc.Service) *echo.Echo {
 			DisableStackAll:     true,
 			DisableErrorHandler: true,
 			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-				return fmt.Errorf("panic: %v\n%s", err, stack)
+				return fmt.Errorf("panic: %w\n%s", err, stack)
 			},
 		}))
 

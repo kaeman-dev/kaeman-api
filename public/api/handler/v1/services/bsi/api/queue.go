@@ -24,29 +24,29 @@ const (
 
 type BSIChatRequest struct {
 	// Content 消息内容，不能为空白
-	Content string `json:"content" binding:"required" example:"Hello kaeman!"`
+	Content string `binding:"required" example:"Hello kaeman!" json:"content"`
 }
 
 type BSISplashRequest struct {
 	// Splasher 发起 splash 的玩家名
-	Splasher string `json:"splasher" example:"Notch"`
+	Splasher string `example:"Notch" json:"splasher"`
 	// Time splash 时间，必填
-	Time time.Time `json:"time" binding:"required" example:"2026-09-29T12:00:00Z"`
+	Time time.Time `binding:"required" example:"2026-09-29T12:00:00Z" json:"time"`
 	// Lobby 大厅名称，必填
-	Lobby string `json:"lobby" binding:"required" example:"lobby-1"`
+	Lobby string `binding:"required" example:"lobby-1" json:"lobby"`
 	// LobbyID 大厅编号，从 1 开始，必填
-	LobbyID int64 `json:"lobbyID" binding:"required" example:"1"`
+	LobbyID int64 `binding:"required" example:"1" json:"lobbyID"`
 	// Location splash 坐标位置
-	Location string `json:"location,omitempty" example:"256 64 -128"`
+	Location string `example:"256 64 -128" json:"location,omitempty"`
 	// ServerID splash 所在服务器 ID
-	ServerID string `json:"serverID,omitempty" example:"lobby"`
+	ServerID string `example:"lobby" json:"serverID,omitempty"`
 	// Note 附加备注
-	Note string `json:"note,omitempty" example:"every 10 mins"`
+	Note string `example:"every 10 mins" json:"note,omitempty"`
 }
 
 type BSIMessage struct {
 	// ID 消息 ID，服务端签发的小写无横杠 UUID
-	ID string `json:"id,omitempty" example:"0f8f8c8e5d3c4b2a9e7d6c5b4a3f2e1d"`
+	ID string `example:"0f8f8c8e5d3c4b2a9e7d6c5b4a3f2e1d" json:"id,omitempty"`
 	// Type 消息类型
 	Type BSIType `json:"type"`
 	// Data 消息体
@@ -55,9 +55,9 @@ type BSIMessage struct {
 
 type BSIEnvelope struct {
 	// Type 消息类型，chat 或 splash
-	Type BSIType `json:"type" binding:"required"`
+	Type BSIType `binding:"required" json:"type"`
 	// Data 消息体，type 为 chat 时为 BSIChatRequest，为 splash 时为 BSISplashRequest
-	Data json.RawMessage `json:"data" example:"{\"content\":\"Hello kaeman!\"}"`
+	Data json.RawMessage `example:"{\"content\":\"Hello kaeman!\"}" json:"data"`
 }
 
 // Send godoc
@@ -66,7 +66,7 @@ type BSIEnvelope struct {
 // @Tags services
 // @Accept json
 // @Security BearerAuth
-// @Param body body BSIEnvelope true "type 为 chat 时 data 为 BSIChatRequest，type 为 splash 时 data 为 BSISplashRequest"
+// @Param body BSIEnvelope true "type 为 chat 时 data 为 BSIChatRequest，type 为 splash 时 data 为 BSISplashRequest"
 // @Success 202 {object} response.Response[any]
 // @Failure 400 {object} response.Response[any] "Invalid request body / Message must not be blank / Valid time, lobby and lobbyID are required / Unknown message kind"
 // @Failure 401 {object} response.Response[any] "Key required / Invalid public api key / Required permission missing / Invalid minecraft key / Minecraft identity not bound to this public api key"
@@ -75,6 +75,7 @@ type BSIEnvelope struct {
 // @Router /v1/services/bsi/queue [post]
 func (h Handler) Send(c echo.Context) error {
 	var env BSIEnvelope
+
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, 16<<10)
 	if err := c.Echo().JSONSerializer.Deserialize(c, &env); err != nil {
 		return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
@@ -87,27 +88,35 @@ func (h Handler) Send(c echo.Context) error {
 		if err := (response.JSONSerializer{}).Decode(bytes.NewReader(env.Data), &req); err != nil {
 			return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
 		}
+
 		if strings.TrimSpace(req.Content) == "" {
 			return response.Write(c, http.StatusBadRequest, "Message must not be blank", nil)
 		}
+
 		msg.Data = req
 	case BSITypeSplash:
 		var req BSISplashRequest
 		if err := (response.JSONSerializer{}).Decode(bytes.NewReader(env.Data), &req); err != nil {
 			return response.Write(c, http.StatusBadRequest, "Invalid request body", nil)
 		}
+
 		if req.Time.IsZero() || strings.TrimSpace(req.Lobby) == "" || req.LobbyID < 1 {
 			return response.Write(c, http.StatusBadRequest, "Valid time, lobby and lobbyID are required", nil)
 		}
+
 		msg.Data = req
 	default:
 		return response.Write(c, http.StatusBadRequest, "Unknown message kind", nil)
 	}
+
 	msg.ID = utils.NewUUID()
+
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
+
 	h.Services.BSI.Broadcast(data)
+
 	return response.Write(c, http.StatusAccepted, "ok", nil)
 }

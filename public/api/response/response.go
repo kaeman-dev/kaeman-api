@@ -17,6 +17,7 @@ func Write(c echo.Context, status int, msg string, data any) error {
 	if msg == "" {
 		msg = http.StatusText(status)
 	}
+
 	switch {
 	case status == http.StatusUnauthorized:
 		c.Response().Header().Set("WWW-Authenticate", "Bearer")

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"time"
-
 	"uuid"
 
 	"gorm.io/gorm"
